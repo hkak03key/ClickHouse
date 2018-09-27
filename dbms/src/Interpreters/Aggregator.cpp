@@ -25,7 +25,7 @@
 #if __has_include(<Interpreters/config_compile.h>)
 #include <Interpreters/config_compile.h>
 #include <Columns/ColumnWithDictionary.h>
-#include <DataTypes/DataTypeWithDictionary.h>
+#include <DataTypes/DataTypeLowCardinality.h>
 
 #endif
 

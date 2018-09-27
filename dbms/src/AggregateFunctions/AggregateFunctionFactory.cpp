@@ -13,7 +13,7 @@
 #include <Common/typeid_cast.h>
 
 #include <Poco/String.h>
-#include <DataTypes/DataTypeWithDictionary.h>
+#include <DataTypes/DataTypeLowCardinality.h>
 
 
 namespace DB
@@ -48,7 +48,7 @@ static DataTypes convertTypesWithDictionaryToNested(const DataTypes & types)
     res_types.reserve(types.size());
     for (const auto & type : types)
     {
-        if (auto * type_with_dict = typeid_cast<const DataTypeWithDictionary *>(type.get()))
+        if (auto * type_with_dict = typeid_cast<const DataTypeLowCardinality *>(type.get()))
             res_types.push_back(type_with_dict->getDictionaryType());
         else
             res_types.push_back(type);

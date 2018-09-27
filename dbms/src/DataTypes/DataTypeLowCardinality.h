@@ -5,13 +5,13 @@
 namespace DB
 {
 
-class DataTypeWithDictionary : public IDataType
+class DataTypeLowCardinality : public IDataType
 {
 private:
     DataTypePtr dictionary_type;
 
 public:
-    DataTypeWithDictionary(DataTypePtr dictionary_type_);
+    DataTypeLowCardinality(DataTypePtr dictionary_type_);
 
     const DataTypePtr & getDictionaryType() const { return dictionary_type; }
 

@@ -1,6 +1,6 @@
 #include <Functions/IFunction.h>
 #include <Functions/FunctionFactory.h>
-#include <DataTypes/DataTypeWithDictionary.h>
+#include <DataTypes/DataTypeLowCardinality.h>
 #include <Columns/ColumnWithDictionary.h>
 #include <Common/typeid_cast.h>
 
@@ -30,7 +30,7 @@ public:
 
     DataTypePtr getReturnTypeImpl(const DataTypes & arguments) const override
     {
-        auto * type = typeid_cast<const DataTypeWithDictionary *>(arguments[0].get());
+        auto * type = typeid_cast<const DataTypeLowCardinality *>(arguments[0].get());
         if (!type)
             throw Exception("First first argument of function lowCardinalityKeys must be ColumnWithDictionary, but got"
                             + arguments[0]->getName(), ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT);

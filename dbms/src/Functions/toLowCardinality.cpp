@@ -1,7 +1,7 @@
 #include <Functions/IFunction.h>
 #include <Functions/FunctionFactory.h>
 #include <DataTypes/DataTypesNumber.h>
-#include <DataTypes/DataTypeWithDictionary.h>
+#include <DataTypes/DataTypeLowCardinality.h>
 #include <Columns/ColumnsNumber.h>
 #include <Columns/ColumnWithDictionary.h>
 #include <Common/typeid_cast.h>
@@ -29,7 +29,7 @@ public:
         if (arguments[0]->withDictionary())
             return arguments[0];
 
-        return std::make_shared<DataTypeWithDictionary>(arguments[0]);
+        return std::make_shared<DataTypeLowCardinality>(arguments[0]);
     }
 
     void executeImpl(Block & block, const ColumnNumbers & arguments, size_t result, size_t /*input_rows_count*/) override

@@ -27,7 +27,7 @@
 #include <Storages/MergeTree/KeyCondition.h>
 
 #include <ext/range.h>
-#include <DataTypes/DataTypeWithDictionary.h>
+#include <DataTypes/DataTypeLowCardinality.h>
 
 
 namespace DB
@@ -131,7 +131,7 @@ void Set::setHeader(const Block & block)
         }
 
         /// Convert low cardinality column to full.
-        if (auto * low_cardinality_type = typeid_cast<const DataTypeWithDictionary *>(data_types.back().get()))
+        if (auto * low_cardinality_type = typeid_cast<const DataTypeLowCardinality *>(data_types.back().get()))
         {
             data_types.back() = low_cardinality_type->getDictionaryType();
             materialized_columns.emplace_back(key_columns.back()->convertToFullColumnIfWithDictionary());

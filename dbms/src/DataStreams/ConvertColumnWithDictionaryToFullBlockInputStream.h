@@ -2,7 +2,7 @@
 
 #include <DataStreams/IProfilingBlockInputStream.h>
 #include <Columns/ColumnWithDictionary.h>
-#include <DataTypes/DataTypeWithDictionary.h>
+#include <DataTypes/DataTypeLowCardinality.h>
 #include <Columns/ColumnConst.h>
 
 namespace DB
@@ -38,7 +38,7 @@ private:
             else
                 column.column = column.column->convertToFullColumnIfWithDictionary();
 
-            if (auto * low_cardinality_type = typeid_cast<const DataTypeWithDictionary *>(column.type.get()))
+            if (auto * low_cardinality_type = typeid_cast<const DataTypeLowCardinality *>(column.type.get()))
                 column.type = low_cardinality_type->getDictionaryType();
         }
 

@@ -37,7 +37,7 @@
 #include <Functions/FunctionsMiscellaneous.h>
 #include <Functions/FunctionHelpers.h>
 #include <Functions/DateTimeTransforms.h>
-#include <DataTypes/DataTypeWithDictionary.h>
+#include <DataTypes/DataTypeLowCardinality.h>
 #include <Columns/ColumnWithDictionary.h>
 
 
@@ -1750,8 +1750,8 @@ private:
 
     WrapperType prepareUnpackDictionaries(const DataTypePtr & from_type, const DataTypePtr & to_type) const
     {
-        const auto * from_with_dict = typeid_cast<const DataTypeWithDictionary *>(from_type.get());
-        const auto * to_with_dict = typeid_cast<const DataTypeWithDictionary *>(to_type.get());
+        const auto * from_with_dict = typeid_cast<const DataTypeLowCardinality *>(from_type.get());
+        const auto * to_with_dict = typeid_cast<const DataTypeLowCardinality *>(to_type.get());
         const auto & from_nested = from_with_dict ? from_with_dict->getDictionaryType() : from_type;
         const auto & to_nested = to_with_dict ? to_with_dict->getDictionaryType() : to_type;
 
