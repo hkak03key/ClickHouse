@@ -16,12 +16,12 @@ namespace DB
 class ConvertColumnLowCardinalityToFullBlockInputStream : public IProfilingBlockInputStream
 {
 public:
-    explicit ConvertColumnColumnLowCardinalityToFullBlockInputStream(const BlockInputStreamPtr & input)
+    explicit ConvertColumnLowCardinalityToFullBlockInputStream(const BlockInputStreamPtr & input)
     {
         children.push_back(input);
     }
 
-    String getName() const override { return "ConvertColumnColumnLowCardinalityToFull"; }
+    String getName() const override { return "ConvertColumnLowCardinalityToFull"; }
 
     Block getHeader() const override { return convert(children.at(0)->getHeader()); }
 
