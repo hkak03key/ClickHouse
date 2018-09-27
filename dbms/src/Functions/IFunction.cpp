@@ -309,7 +309,7 @@ bool PreparedFunctionImpl::defaultImplementationForConstantArguments(Block & blo
     for (size_t i = 0; i < arguments_size; ++i)
         temporary_argument_numbers[i] = i;
 
-    executeWithoutColumnsWithDictionary(temporary_block, temporary_argument_numbers, arguments_size, temporary_block.rows());
+    executeWithoutLowCardinalityColumns(temporary_block, temporary_argument_numbers, arguments_size, temporary_block.rows());
 
     block.getByPosition(result).column = ColumnConst::create(temporary_block.getByPosition(arguments_size).column, input_rows_count);
     return true;
@@ -333,7 +333,7 @@ bool PreparedFunctionImpl::defaultImplementationForNulls(Block & block, const Co
     if (null_presence.has_nullable)
     {
         Block temporary_block = createBlockWithNestedColumns(block, args, result);
-        executeWithoutColumnsWithDictionary(temporary_block, args, result, temporary_block.rows());
+        executeWithoutLowCardinalityColumns(temporary_block, args, result, temporary_block.rows());
         block.getByPosition(result).column = wrapInNullable(temporary_block.getByPosition(result).column, block, args,
                                                             result, input_rows_count);
         return true;
@@ -342,7 +342,7 @@ bool PreparedFunctionImpl::defaultImplementationForNulls(Block & block, const Co
     return false;
 }
 
-void PreparedFunctionImpl::executeWithoutColumnsWithDictionary(Block & block, const ColumnNumbers & args, size_t result, size_t input_rows_count)
+void PreparedFunctionImpl::executeWithoutLowCardinalityColumns(Block & block, const ColumnNumbers & args, size_t result, size_t input_rows_count)
 {
     if (defaultImplementationForConstantArguments(block, args, result, input_rows_count))
         return;
@@ -372,7 +372,7 @@ static const ColumnLowCardinality * findLowCardinalityArgument(const Block & blo
     return result_column;
 }
 
-static ColumnPtr replaceColumnsWithDictionaryByNestedAndGetDictionaryIndexes(
+static ColumnPtr replaceLowCardinalityColumnsByNestedAndGetDictionaryIndexes(
     Block & block, const ColumnNumbers & args, bool can_be_executed_on_default_arguments)
 {
     size_t num_rows = 0;
@@ -419,7 +419,7 @@ static ColumnPtr replaceColumnsWithDictionaryByNestedAndGetDictionaryIndexes(
     return indexes;
 }
 
-static void convertColumnsWithDictionaryToFull(Block & block, const ColumnNumbers & args)
+static void convertLowCardinalityColumnsToFull(Block & block, const ColumnNumbers & args)
 {
     for (auto arg : args)
     {
@@ -432,7 +432,7 @@ static void convertColumnsWithDictionaryToFull(Block & block, const ColumnNumber
 
 void PreparedFunctionImpl::execute(Block & block, const ColumnNumbers & args, size_t result, size_t input_rows_count)
 {
-    if (useDefaultImplementationForColumnsWithDictionary())
+    if (useDefaultImplementationForLowCardinalityColumns())
     {
         auto & res = block.safeGetByPosition(result);
         Block block_without_dicts = block.cloneWithoutColumns();
@@ -463,10 +463,10 @@ void PreparedFunctionImpl::execute(Block & block, const ColumnNumbers & args, si
             }
 
             block_without_dicts.safeGetByPosition(result).type = res_type_with_dict->getDictionaryType();
-            ColumnPtr indexes = replaceColumnsWithDictionaryByNestedAndGetDictionaryIndexes(
+            ColumnPtr indexes = replaceLowCardinalityColumnsByNestedAndGetDictionaryIndexes(
                     block_without_dicts, args, can_be_executed_on_default_arguments);
 
-            executeWithoutColumnsWithDictionary(block_without_dicts, args, result, block_without_dicts.rows());
+            executeWithoutLowCardinalityColumns(block_without_dicts, args, result, block_without_dicts.rows());
 
             auto & keys = block_without_dicts.safeGetByPosition(result).column;
             if (auto full_column = keys->convertToFullColumnIfConst())
@@ -499,13 +499,13 @@ void PreparedFunctionImpl::execute(Block & block, const ColumnNumbers & args, si
         }
         else
         {
-            convertColumnsWithDictionaryToFull(block_without_dicts, args);
-            executeWithoutColumnsWithDictionary(block_without_dicts, args, result, input_rows_count);
+            convertLowCardinalityColumnsToFull(block_without_dicts, args);
+            executeWithoutLowCardinalityColumns(block_without_dicts, args, result, input_rows_count);
             res.column = block_without_dicts.safeGetByPosition(result).column;
         }
     }
     else
-        executeWithoutColumnsWithDictionary(block, args, result, input_rows_count);
+        executeWithoutLowCardinalityColumns(block, args, result, input_rows_count);
 }
 
 void FunctionBuilderImpl::checkNumberOfArguments(size_t number_of_arguments) const
@@ -613,7 +613,7 @@ llvm::Value * IFunction::compile(llvm::IRBuilderBase & builder, const DataTypes 
 
 DataTypePtr FunctionBuilderImpl::getReturnType(const ColumnsWithTypeAndName & arguments) const
 {
-    if (useDefaultImplementationForColumnsWithDictionary())
+    if (useDefaultImplementationForLowCardinalityColumns())
     {
         bool has_low_cardinality = false;
         size_t num_full_low_cardinality_columns = 0;

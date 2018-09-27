@@ -36,7 +36,7 @@ private:
             if (auto * column_const = typeid_cast<const ColumnConst *>(column.column.get()))
                 column.column = column_const->removeLowCardinality();
             else
-                column.column = column.column->convertToFullColumnIfWithDictionary();
+                column.column = column.column->convertToFullColumnIfLowCardinality();
 
             if (auto * low_cardinality_type = typeid_cast<const DataTypeLowCardinality *>(column.type.get()))
                 column.type = low_cardinality_type->getDictionaryType();

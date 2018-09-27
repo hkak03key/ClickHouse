@@ -49,7 +49,7 @@ public:
 
     /// If column isn't ColumnLowCardinality, return itself.
     /// If column is ColumnLowCardinality, transforms is to full column.
-    virtual Ptr convertToFullColumnIfWithDictionary() const { return getPtr(); }
+    virtual Ptr convertToFullColumnIfLowCardinality() const { return getPtr(); }
 
     /// Creates empty column with the same type.
     virtual MutablePtr cloneEmpty() const { return cloneResized(0); }

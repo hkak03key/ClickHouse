@@ -134,7 +134,7 @@ void Set::setHeader(const Block & block)
         if (auto * low_cardinality_type = typeid_cast<const DataTypeLowCardinality *>(data_types.back().get()))
         {
             data_types.back() = low_cardinality_type->getDictionaryType();
-            materialized_columns.emplace_back(key_columns.back()->convertToFullColumnIfWithDictionary());
+            materialized_columns.emplace_back(key_columns.back()->convertToFullColumnIFLowCardinality());
             key_columns.back() = materialized_columns.back().get();
         }
     }
@@ -186,7 +186,7 @@ bool Set::insertFromBlock(const Block & block)
         /// Convert low cardinality column to full.
         if (key_columns.back()->withDictionary())
         {
-            materialized_columns.emplace_back(key_columns.back()->convertToFullColumnIfWithDictionary());
+            materialized_columns.emplace_back(key_columns.back()->convertToFullColumnIfLowCardinality());
             key_columns.back() = materialized_columns.back().get();
         }
     }

@@ -179,15 +179,15 @@ struct IndexesSerializationType
     IndexesSerializationType() = default;
 };
 
-struct SerializeStateWithDictionary : public IDataType::SerializeBinaryBulkState
+struct SerializeStateLowCardinality : public IDataType::SerializeBinaryBulkState
 {
     KeysSerializationVersion key_version;
     MutableColumnUniquePtr shared_dictionary;
 
-    explicit SerializeStateWithDictionary(UInt64 key_version) : key_version(key_version) {}
+    explicit SerializeStateLowCardinality(UInt64 key_version) : key_version(key_version) {}
 };
 
-struct DeserializeStateWithDictionary : public IDataType::DeserializeBinaryBulkState
+struct DeserializeStateLowCardinality : public IDataType::DeserializeBinaryBulkState
 {
     KeysSerializationVersion key_version;
     ColumnUniquePtr global_dictionary;
@@ -197,39 +197,39 @@ struct DeserializeStateWithDictionary : public IDataType::DeserializeBinaryBulkS
     ColumnPtr null_map;
     UInt64 num_pending_rows = 0;
 
-    explicit DeserializeStateWithDictionary(UInt64 key_version) : key_version(key_version) {}
+    explicit DeserializeStateLowCardinality(UInt64 key_version) : key_version(key_version) {}
 };
 
-static SerializeStateWithDictionary * checkAndGetWithDictionarySerializeState(
+static SerializeStateLowCardinality * checkAndGetLowCardinalitySerializeState(
     IDataType::SerializeBinaryBulkStatePtr & state)
 {
     if (!state)
         throw Exception("Got empty state for DataTypeLowCardinality.", ErrorCodes::LOGICAL_ERROR);
 
-    auto * with_dictionary_state = typeid_cast<SerializeStateWithDictionary *>(state.get());
+    auto * with_dictionary_state = typeid_cast<SerializeStateLowCardinality *>(state.get());
     if (!with_dictionary_state)
     {
         auto & state_ref = *state;
         throw Exception("Invalid SerializeBinaryBulkState for DataTypeLowCardinality. Expected: "
-                        + demangle(typeid(SerializeStateWithDictionary).name()) + ", got "
+                        + demangle(typeid(SerializeStateLowCardinality).name()) + ", got "
                         + demangle(typeid(state_ref).name()), ErrorCodes::LOGICAL_ERROR);
     }
 
     return with_dictionary_state;
 }
 
-static DeserializeStateWithDictionary * checkAndGetWithDictionaryDeserializeState(
+static DeserializeStateLowCardinality * checkAndGetLowCardinalityDeserializeState(
     IDataType::DeserializeBinaryBulkStatePtr & state)
 {
     if (!state)
         throw Exception("Got empty state for DataTypeLowCardinality.", ErrorCodes::LOGICAL_ERROR);
 
-    auto * with_dictionary_state = typeid_cast<DeserializeStateWithDictionary *>(state.get());
+    auto * with_dictionary_state = typeid_cast<DeserializeStateLowCardinality *>(state.get());
     if (!with_dictionary_state)
     {
         auto & state_ref = *state;
         throw Exception("Invalid DeserializeBinaryBulkState for DataTypeLowCardinality. Expected: "
-                        + demangle(typeid(DeserializeStateWithDictionary).name()) + ", got "
+                        + demangle(typeid(DeserializeStateLowCardinality).name()) + ", got "
                         + demangle(typeid(state_ref).name()), ErrorCodes::LOGICAL_ERROR);
     }
 
@@ -253,14 +253,14 @@ void DataTypeLowCardinality::serializeBinaryBulkStatePrefix(
 
     writeIntBinary(key_version, *stream);
 
-    state = std::make_shared<SerializeStateWithDictionary>(key_version);
+    state = std::make_shared<SerializeStateLowCardinality>(key_version);
 }
 
 void DataTypeLowCardinality::serializeBinaryBulkStateSuffix(
     SerializeBinaryBulkSettings & settings,
     SerializeBinaryBulkStatePtr & state) const
 {
-    auto * state_with_dictionary = checkAndGetWithDictionarySerializeState(state);
+    auto * state_with_dictionary = checkAndGetLowCardinalitySerializeState(state);
     KeysSerializationVersion::checkVersion(state_with_dictionary->key_version.value);
 
     if (state_with_dictionary->shared_dictionary && settings.low_cardinality_max_dictionary_size)
@@ -296,7 +296,7 @@ void DataTypeLowCardinality::deserializeBinaryBulkStatePrefix(
     UInt64 keys_version;
     readIntBinary(keys_version, *stream);
 
-    state = std::make_shared<DeserializeStateWithDictionary>(keys_version);
+    state = std::make_shared<DeserializeStateLowCardinality>(keys_version);
 }
 
 namespace
@@ -499,7 +499,7 @@ void DataTypeLowCardinality::serializeBinaryBulkWithMultipleStreams(
 
     const ColumnLowCardinality & column_with_dictionary = typeid_cast<const ColumnLowCardinality &>(column);
 
-    auto * state_with_dictionary = checkAndGetWithDictionarySerializeState(state);
+    auto * state_with_dictionary = checkAndGetLowCardinalitySerializeState(state);
     auto & global_dictionary = state_with_dictionary->shared_dictionary;
     KeysSerializationVersion::checkVersion(state_with_dictionary->key_version.value);
 
@@ -591,7 +591,7 @@ void DataTypeLowCardinality::deserializeBinaryBulkWithMultipleStreams(
     if (!indexes_stream)
         throw Exception("Got empty stream for DataTypeLowCardinality indexes.", ErrorCodes::LOGICAL_ERROR);
 
-    auto * state_with_dictionary = checkAndGetWithDictionaryDeserializeState(state);
+    auto * state_with_dictionary = checkAndGetLowCardinalityDeserializeState(state);
     KeysSerializationVersion::checkVersion(state_with_dictionary->key_version.value);
 
     auto readDictionary = [this, state_with_dictionary, keys_stream]()

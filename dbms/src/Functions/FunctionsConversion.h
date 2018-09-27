@@ -1374,7 +1374,7 @@ protected:
 
     bool useDefaultImplementationForNulls() const override { return false; }
     bool useDefaultImplementationForConstants() const override { return true; }
-    bool useDefaultImplementationForColumnsWithDictionary() const override { return false; }
+    bool useDefaultImplementationForLowCardinalityColumns() const override { return false; }
     ColumnNumbers getArgumentsThatAreAlwaysConstant() const override { return {1}; }
 
 private:
@@ -2026,7 +2026,7 @@ protected:
     }
 
     bool useDefaultImplementationForNulls() const override { return false; }
-    bool useDefaultImplementationForColumnsWithDictionary() const override { return false; }
+    bool useDefaultImplementationForLowCardinalityColumns() const override { return false; }
 
 private:
     template <typename DataType>

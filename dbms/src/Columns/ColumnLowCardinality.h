@@ -39,7 +39,7 @@ public:
     const char * getFamilyName() const override { return "ColumnLowCardinality"; }
 
     ColumnPtr convertToFullColumn() const { return getDictionary().getNestedColumn()->index(getIndexes(), 0); }
-    ColumnPtr convertToFullColumnIfWithDictionary() const override { return convertToFullColumn(); }
+    ColumnPtr convertToFullColumnIfLowCardinality() const override { return convertToFullColumn(); }
 
     MutableColumnPtr cloneResized(size_t size) const override;
     size_t size() const override { return getIndexes().size(); }

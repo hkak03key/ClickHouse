@@ -42,7 +42,7 @@ void AggregateFunctionFactory::registerFunction(const String & name, Creator cre
             ErrorCodes::LOGICAL_ERROR);
 }
 
-static DataTypes convertTypesWithDictionaryToNested(const DataTypes & types)
+static DataTypes convertLowCardinalityTypesToNested(const DataTypes & types)
 {
     DataTypes res_types;
     res_types.reserve(types.size());
@@ -63,7 +63,7 @@ AggregateFunctionPtr AggregateFunctionFactory::get(
     const Array & parameters,
     int recursion_level) const
 {
-    auto type_without_dictionary = convertTypesWithDictionaryToNested(argument_types);
+    auto type_without_dictionary = convertLowCardinalityToNested(argument_types);
 
     /// If one of types is Nullable, we apply aggregate function combinator "Null".
 
