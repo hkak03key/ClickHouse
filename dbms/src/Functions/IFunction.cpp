@@ -123,7 +123,7 @@ static DataTypePtr recursiveRemoveLowCardinality(const DataTypePtr & type)
             return std::make_shared<DataTypeTuple>(elements);
     }
 
-    if (const auto * low_cardinality_type = typeid_cast<const DataTypeWithDictionary *>(type.get()))
+    if (const auto * low_cardinality_type = typeid_cast<const DataTypeLowCardinality *>(type.get()))
         return low_cardinality_type->getDictionaryType();
 
     return type;
@@ -398,7 +398,7 @@ static ColumnPtr replaceColumnsWithDictionaryByNestedAndGetDictionaryIndexes(
             column.column = column_const->removeLowCardinality()->cloneResized(num_rows);
         else if (auto * column_with_dict = checkAndGetColumn<ColumnWithDictionary>(column.column.get()))
         {
-            auto * type_with_dict = checkAndGetDataType<DataTypeWithDictionary>(column.type.get());
+            auto * type_with_dict = checkAndGetDataType<DataTypeLowCardinality>(column.type.get());
 
             if (!type_with_dict)
                 throw Exception("Incompatible type for column with dictionary: " + column.type->getName(),
@@ -440,7 +440,7 @@ void PreparedFunctionImpl::execute(Block & block, const ColumnNumbers & args, si
         for (auto arg : args)
             block_without_dicts.safeGetByPosition(arg).column = block.safeGetByPosition(arg).column;
 
-        if (auto * res_type_with_dict = typeid_cast<const DataTypeWithDictionary *>(res.type.get()))
+        if (auto * res_type_with_dict = typeid_cast<const DataTypeLowCardinality *>(res.type.get()))
         {
             const auto * low_cardinality_column = findLowCardinalityArgument(block, args);
             bool can_be_executed_on_default_arguments = canBeExecutedOnDefaultArguments();
@@ -472,7 +472,7 @@ void PreparedFunctionImpl::execute(Block & block, const ColumnNumbers & args, si
             if (auto full_column = keys->convertToFullColumnIfConst())
                 keys = full_column;
 
-            auto res_mut_dictionary = DataTypeWithDictionary::createColumnUnique(*res_type_with_dict->getDictionaryType());
+            auto res_mut_dictionary = DataTypeLowCardinality::createColumnUnique(*res_type_with_dict->getDictionaryType());
             ColumnPtr res_indexes = res_mut_dictionary->uniqueInsertRangeFrom(*keys, 0, keys->size());
             ColumnUniquePtr res_dictionary = std::move(res_mut_dictionary);
 
@@ -627,7 +627,7 @@ DataTypePtr FunctionBuilderImpl::getReturnType(const ColumnsWithTypeAndName & ar
             if (is_const)
                 arg.column = static_cast<const ColumnConst &>(*arg.column).removeLowCardinality();
 
-            if (auto * type_with_dictionary = typeid_cast<const DataTypeWithDictionary *>(arg.type.get()))
+            if (auto * type_with_dictionary = typeid_cast<const DataTypeLowCardinality *>(arg.type.get()))
             {
                 arg.type = type_with_dictionary->getDictionaryType();
                 has_low_cardinality = true;
@@ -647,7 +647,7 @@ DataTypePtr FunctionBuilderImpl::getReturnType(const ColumnsWithTypeAndName & ar
 
         if (canBeExecutedOnLowCardinalityDictionary() && has_low_cardinality
             && num_full_low_cardinality_columns <= 1 && num_full_ordinary_columns == 0)
-            return std::make_shared<DataTypeWithDictionary>(getReturnTypeWithoutDictionary(args_without_dictionary));
+            return std::make_shared<DataTypeLowCardinality>(getReturnTypeWithoutDictionary(args_without_dictionary));
         else
             return getReturnTypeWithoutDictionary(args_without_dictionary);
     }
