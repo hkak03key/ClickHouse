@@ -63,7 +63,7 @@ AggregateFunctionPtr AggregateFunctionFactory::get(
     const Array & parameters,
     int recursion_level) const
 {
-    auto type_without_dictionary = convertLowCardinalityToNested(argument_types);
+    auto type_without_dictionary = convertLowCardinalityTypesToNested(argument_types);
 
     /// If one of types is Nullable, we apply aggregate function combinator "Null".
 
