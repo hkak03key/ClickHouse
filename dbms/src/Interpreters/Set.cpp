@@ -184,7 +184,7 @@ bool Set::insertFromBlock(const Block & block)
         }
 
         /// Convert low cardinality column to full.
-        if (key_columns.back()->withDictionary())
+        if (key_columns.back()->lowCardinality())
         {
             materialized_columns.emplace_back(key_columns.back()->convertToFullColumnIfLowCardinality());
             key_columns.back() = materialized_columns.back().get();

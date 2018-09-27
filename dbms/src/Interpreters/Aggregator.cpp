@@ -405,7 +405,7 @@ AggregatedDataVariants::Type Aggregator::chooseAggregationMethod()
     {
         DataTypePtr type = (params.src_header ? params.src_header : params.intermediate_header).safeGetByPosition(pos).type;
 
-        if (type->withDictionary())
+        if (type->lowCardinality())
         {
             has_low_cardinality = true;
             type = removeLowCardinality(type);

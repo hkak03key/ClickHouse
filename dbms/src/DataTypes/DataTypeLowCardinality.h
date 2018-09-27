@@ -136,7 +136,7 @@ public:
     bool isCategorial() const override { return false; }
     bool isNullable() const override { return false; }
     bool onlyNull() const override { return false; }
-    bool withDictionary() const override { return true; }
+    bool lowCardinality() const override { return true; }
 
     static MutableColumnUniquePtr createColumnUnique(const IDataType & keys_type);
     static MutableColumnUniquePtr createColumnUnique(const IDataType & keys_type, MutableColumnPtr && keys);

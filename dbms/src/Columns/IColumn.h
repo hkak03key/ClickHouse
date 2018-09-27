@@ -333,7 +333,7 @@ public:
     /// Can be inside ColumnNullable.
     virtual bool canBeInsideNullable() const { return false; }
 
-    virtual bool withDictionary() const { return false; }
+    virtual bool lowCardinality() const { return false; }
 
 
     virtual ~IColumn() {}

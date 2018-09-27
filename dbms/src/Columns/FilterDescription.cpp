@@ -50,7 +50,7 @@ ConstantFilterDescription::ConstantFilterDescription(const IColumn & column)
 
 FilterDescription::FilterDescription(const IColumn & column_)
 {
-    if (column_.withDictionary())
+    if (column_.lowCardinality())
         data_holder = column_.convertToFullColumnIfLowCardinality();
 
     const auto & column = data_holder ? *data_holder : column_;

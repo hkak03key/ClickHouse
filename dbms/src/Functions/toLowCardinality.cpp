@@ -26,7 +26,7 @@ public:
 
     DataTypePtr getReturnTypeImpl(const DataTypes & arguments) const override
     {
-        if (arguments[0]->withDictionary())
+        if (arguments[0]->lowCardinality())
             return arguments[0];
 
         return std::make_shared<DataTypeLowCardinality>(arguments[0]);
@@ -38,7 +38,7 @@ public:
         const auto & arg = block.getByPosition(arg_num);
         auto & res = block.getByPosition(result);
 
-        if (arg.type->withDictionary())
+        if (arg.type->lowCardinality())
             res.column = arg.column;
         else
         {

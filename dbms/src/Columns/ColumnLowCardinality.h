@@ -138,7 +138,7 @@ public:
     bool isFixedAndContiguous() const override { return getDictionary().isFixedAndContiguous(); }
     size_t sizeOfValueIfFixed() const override { return getDictionary().sizeOfValueIfFixed(); }
     bool isNumeric() const override { return getDictionary().isNumeric(); }
-    bool withDictionary() const override { return true; }
+    bool lowCardinality() const override { return true; }
 
     const IColumnUnique & getDictionary() const { return dictionary.getColumnUnique(); }
     const ColumnPtr & getDictionaryPtr() const { return dictionary.getColumnUniquePtr(); }
