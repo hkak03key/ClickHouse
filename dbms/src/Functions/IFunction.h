@@ -77,8 +77,8 @@ protected:
       */
     virtual bool useDefaultImplementationForConstants() const { return false; }
 
-    /** If function arguments has single column with dictionary and all other arguments are constants, call function on nested column.
-      * Otherwise, convert all columns with dictionary to ordinary columns.
+    /** If function arguments has single low cardinality column and all other arguments are constants, call function on nested column.
+      * Otherwise, convert all low cardinality columns to ordinary columns.
       * Returns ColumnLowCardinality if at least one argument is ColumnLowCardinality.
       */
     virtual bool useDefaultImplementationForLowCardinalityColumns() const { return true; }
@@ -292,7 +292,7 @@ protected:
     virtual bool useDefaultImplementationForNulls() const { return true; }
 
     /** If useDefaultImplementationForNulls() is true, than change arguments for getReturnType() and buildImpl().
-      * If function arguments has types with dictionary, convert them to ordinary types.
+      * If function arguments has low cardinality types, convert them to ordinary types.
       * getReturnType returns ColumnLowCardinality if at least one argument type is ColumnLowCardinality.
       */
     virtual bool useDefaultImplementationForLowCardinalityColumns() const { return true; }
@@ -309,7 +309,7 @@ protected:
 
 private:
 
-    DataTypePtr getReturnTypeWithoutDictionary(const ColumnsWithTypeAndName & arguments) const;
+    DataTypePtr getReturnTypeWithoutLowCardinality(const ColumnsWithTypeAndName & arguments) const;
 };
 
 /// Previous function interface.

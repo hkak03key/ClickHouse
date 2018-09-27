@@ -166,7 +166,7 @@ public:
 
     ///void setIndexes(MutableColumnPtr && indexes_) { indexes = std::move(indexes_); }
 
-    /// Set shared ColumnUnique for empty column with dictionary.
+    /// Set shared ColumnUnique for empty low cardinality column.
     void setSharedDictionary(const ColumnPtr & column_unique);
     bool isSharedDictionary() const { return dictionary.isShared(); }
 

@@ -129,14 +129,14 @@ void ColumnLowCardinality::insertDefault()
 
 void ColumnLowCardinality::insertFrom(const IColumn & src, size_t n)
 {
-    auto * src_with_dict = typeid_cast<const ColumnLowCardinality *>(&src);
+    auto * low_cardinality_src = typeid_cast<const ColumnLowCardinality *>(&src);
 
-    if (!src_with_dict)
+    if (!low_cardinality_src)
         throw Exception("Expected ColumnLowCardinality, got" + src.getName(), ErrorCodes::ILLEGAL_COLUMN);
 
-    size_t position = src_with_dict->getIndexes().getUInt(n);
+    size_t position = low_cardinality_src->getIndexes().getUInt(n);
 
-    if (&src_with_dict->getDictionary() == &getDictionary())
+    if (&low_cardinality_src->getDictionary() == &getDictionary())
     {
         /// Dictionary is shared with src column. Insert only index.
         idx.insertPosition(position);
@@ -144,7 +144,7 @@ void ColumnLowCardinality::insertFrom(const IColumn & src, size_t n)
     else
     {
         compactIfSharedDictionary();
-        const auto & nested = *src_with_dict->getDictionary().getNestedColumn();
+        const auto & nested = *low_cardinality_src->getDictionary().getNestedColumn();
         idx.insertPosition(dictionary.getColumnUnique().uniqueInsertFrom(nested, position));
     }
 
@@ -160,15 +160,15 @@ void ColumnLowCardinality::insertFromFullColumn(const IColumn & src, size_t n)
 
 void ColumnLowCardinality::insertRangeFrom(const IColumn & src, size_t start, size_t length)
 {
-    auto * src_with_dict = typeid_cast<const ColumnLowCardinality *>(&src);
+    auto * low_cardinality_src = typeid_cast<const ColumnLowCardinality *>(&src);
 
-    if (!src_with_dict)
+    if (!low_cardinality_src)
         throw Exception("Expected ColumnLowCardinality, got" + src.getName(), ErrorCodes::ILLEGAL_COLUMN);
 
-    if (&src_with_dict->getDictionary() == &getDictionary())
+    if (&low_cardinality_src->getDictionary() == &getDictionary())
     {
         /// Dictionary is shared with src column. Insert only indexes.
-        idx.insertPositionsRange(src_with_dict->getIndexes(), start, length);
+        idx.insertPositionsRange(low_cardinality_src->getIndexes(), start, length);
     }
     else
     {
@@ -176,10 +176,10 @@ void ColumnLowCardinality::insertRangeFrom(const IColumn & src, size_t start, si
 
         /// TODO: Support native insertion from other unique column. It will help to avoid null map creation.
 
-        auto sub_idx = (*src_with_dict->getIndexes().cut(start, length)).mutate();
+        auto sub_idx = (*low_cardinality_src->getIndexes().cut(start, length)).mutate();
         auto idx_map = mapUniqueIndex(*sub_idx);
 
-        auto src_nested = src_with_dict->getDictionary().getNestedColumn();
+        auto src_nested = low_cardinality_src->getDictionary().getNestedColumn();
         auto used_keys = src_nested->index(*idx_map, 0);
 
         auto inserted_indexes = dictionary.getColumnUnique().uniqueInsertRangeFrom(*used_keys, 0, used_keys->size());
@@ -248,10 +248,10 @@ MutableColumnPtr ColumnLowCardinality::cloneResized(size_t size) const
 
 int ColumnLowCardinality::compareAt(size_t n, size_t m, const IColumn & rhs, int nan_direction_hint) const
 {
-    const auto & column_with_dictionary = static_cast<const ColumnLowCardinality &>(rhs);
+    const auto & low_cardinality_column = static_cast<const ColumnLowCardinality &>(rhs);
     size_t n_index = getIndexes().getUInt(n);
-    size_t m_index = column_with_dictionary.getIndexes().getUInt(m);
-    return getDictionary().compareAt(n_index, m_index, column_with_dictionary.getDictionary(), nan_direction_hint);
+    size_t m_index = low_cardinality_column.getIndexes().getUInt(m);
+    return getDictionary().compareAt(n_index, m_index, low_cardinality_column.getDictionary(), nan_direction_hint);
 }
 
 void ColumnLowCardinality::getPermutation(bool reverse, size_t limit, int nan_direction_hint, Permutation & res) const
