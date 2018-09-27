@@ -24,7 +24,7 @@
 #include <common/demangle.h>
 #if __has_include(<Interpreters/config_compile.h>)
 #include <Interpreters/config_compile.h>
-#include <Columns/ColumnWithDictionary.h>
+#include <Columns/ColumnLowCardinality.h>
 #include <DataTypes/DataTypeLowCardinality.h>
 
 #endif
@@ -761,7 +761,7 @@ bool Aggregator::executeOnBlock(const Block & block, AggregatedDataVariants & re
             key_columns[i] = materialized_columns.back().get();
         }
 
-        if (const auto * column_with_dictionary = typeid_cast<const ColumnWithDictionary *>(key_columns[i]))
+        if (const auto * column_with_dictionary = typeid_cast<const ColumnLowCardinality *>(key_columns[i]))
         {
             if (!result.isLowCardinality())
             {
@@ -787,7 +787,7 @@ bool Aggregator::executeOnBlock(const Block & block, AggregatedDataVariants & re
                 aggregate_columns[i][j] = materialized_columns.back().get();
             }
 
-            if (auto * col_with_dict = typeid_cast<const ColumnWithDictionary *>(aggregate_columns[i][j]))
+            if (auto * col_with_dict = typeid_cast<const ColumnLowCardinality *>(aggregate_columns[i][j]))
             {
                 materialized_columns.push_back(col_with_dict->convertToFullColumn());
                 aggregate_columns[i][j] = materialized_columns.back().get();

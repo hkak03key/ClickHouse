@@ -1,7 +1,7 @@
 #include <Functions/IFunction.h>
 #include <Functions/FunctionFactory.h>
 #include <DataTypes/DataTypeLowCardinality.h>
-#include <Columns/ColumnWithDictionary.h>
+#include <Columns/ColumnLowCardinality.h>
 #include <Common/typeid_cast.h>
 
 
@@ -32,7 +32,7 @@ public:
     {
         auto * type = typeid_cast<const DataTypeLowCardinality *>(arguments[0].get());
         if (!type)
-            throw Exception("First first argument of function lowCardinalityKeys must be ColumnWithDictionary, but got"
+            throw Exception("First first argument of function lowCardinalityKeys must be ColumnLowCardinality, but got"
                             + arguments[0]->getName(), ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT);
 
         return type->getDictionaryType();
@@ -43,7 +43,7 @@ public:
         auto arg_num = arguments[0];
         const auto & arg = block.getByPosition(arg_num);
         auto & res = block.getByPosition(result);
-        const auto * column_with_dictionary = typeid_cast<const ColumnWithDictionary *>(arg.column.get());
+        const auto * column_with_dictionary = typeid_cast<const ColumnLowCardinality *>(arg.column.get());
         res.column = column_with_dictionary->getDictionary().getNestedColumn()->cloneResized(arg.column->size());
     }
 };

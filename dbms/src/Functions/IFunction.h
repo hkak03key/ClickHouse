@@ -79,7 +79,7 @@ protected:
 
     /** If function arguments has single column with dictionary and all other arguments are constants, call function on nested column.
       * Otherwise, convert all columns with dictionary to ordinary columns.
-      * Returns ColumnWithDictionary if at least one argument is ColumnWithDictionary.
+      * Returns ColumnLowCardinality if at least one argument is ColumnLowCardinality.
       */
     virtual bool useDefaultImplementationForColumnsWithDictionary() const { return true; }
 
@@ -293,11 +293,11 @@ protected:
 
     /** If useDefaultImplementationForNulls() is true, than change arguments for getReturnType() and buildImpl().
       * If function arguments has types with dictionary, convert them to ordinary types.
-      * getReturnType returns ColumnWithDictionary if at least one argument type is ColumnWithDictionary.
+      * getReturnType returns ColumnLowCardinality if at least one argument type is ColumnLowCardinality.
       */
     virtual bool useDefaultImplementationForColumnsWithDictionary() const { return true; }
 
-    /// If it isn't, will convert all ColumnWithDictionary arguments to full columns.
+    /// If it isn't, will convert all ColumnLowCardinality arguments to full columns.
     virtual bool canBeExecutedOnLowCardinalityDictionary() const { return true; }
 
     virtual FunctionBasePtr buildImpl(const ColumnsWithTypeAndName & arguments, const DataTypePtr & return_type) const = 0;

@@ -1,4 +1,4 @@
-#include <Columns/ColumnWithDictionary.h>
+#include <Columns/ColumnLowCardinality.h>
 #include <Columns/ColumnUnique.h>
 #include <Columns/ColumnFixedString.h>
 #include <Columns/ColumnsCommon.h>
@@ -24,14 +24,14 @@ namespace ErrorCodes
 
 namespace
 {
-    const ColumnWithDictionary & getColumnWithDictionary(const IColumn & column)
+    const ColumnLowCardinality & getColumnLowCardinality(const IColumn & column)
     {
-        return typeid_cast<const ColumnWithDictionary &>(column);
+        return typeid_cast<const ColumnLowCardinality &>(column);
     }
 
-    ColumnWithDictionary & getColumnWithDictionary(IColumn & column)
+    ColumnLowCardinality & getColumnLowCardinality(IColumn & column)
     {
-        return typeid_cast<ColumnWithDictionary &>(column);
+        return typeid_cast<ColumnLowCardinality &>(column);
     }
 }
 
@@ -497,7 +497,7 @@ void DataTypeLowCardinality::serializeBinaryBulkWithMultipleStreams(
     if (!indexes_stream)
         throw Exception("Got empty stream for DataTypeLowCardinality indexes.", ErrorCodes::LOGICAL_ERROR);
 
-    const ColumnWithDictionary & column_with_dictionary = typeid_cast<const ColumnWithDictionary &>(column);
+    const ColumnLowCardinality & column_with_dictionary = typeid_cast<const ColumnLowCardinality &>(column);
 
     auto * state_with_dictionary = checkAndGetWithDictionarySerializeState(state);
     auto & global_dictionary = state_with_dictionary->shared_dictionary;
@@ -520,7 +520,7 @@ void DataTypeLowCardinality::serializeBinaryBulkWithMultipleStreams(
         auto indexes_with_overflow = global_dictionary->uniqueInsertRangeWithOverflow(*keys, 0, keys->size(),
                                                                                       settings.low_cardinality_max_dictionary_size);
         size_t max_size = settings.low_cardinality_max_dictionary_size + indexes_with_overflow.overflowed_keys->size();
-        ColumnWithDictionary::Index(indexes_with_overflow.indexes->getPtr()).check(max_size);
+        ColumnLowCardinality::Index(indexes_with_overflow.indexes->getPtr()).check(max_size);
 
         if (global_dictionary->size() > settings.low_cardinality_max_dictionary_size)
             throw Exception("Got dictionary with size " + toString(global_dictionary->size()) +
@@ -574,7 +574,7 @@ void DataTypeLowCardinality::deserializeBinaryBulkWithMultipleStreams(
     DeserializeBinaryBulkSettings & settings,
     DeserializeBinaryBulkStatePtr & state) const
 {
-    ColumnWithDictionary & column_with_dictionary = typeid_cast<ColumnWithDictionary &>(column);
+    ColumnLowCardinality & column_with_dictionary = typeid_cast<ColumnLowCardinality &>(column);
 
     settings.path.push_back(Substream::DictionaryKeys);
     auto * keys_stream = settings.getter(settings.path);
@@ -650,16 +650,16 @@ void DataTypeLowCardinality::deserializeBinaryBulkWithMultipleStreams(
             if (column_is_empty)
                 column_with_dictionary.setSharedDictionary(global_dictionary);
 
-            auto local_column = ColumnWithDictionary::create(global_dictionary, std::move(indexes_column));
+            auto local_column = ColumnLowCardinality::create(global_dictionary, std::move(indexes_column));
             column_with_dictionary.insertRangeFrom(*local_column, 0, num_rows);
         }
         else
         {
             auto maps = mapIndexWithAdditionalKeys(*indexes_column, global_dictionary->size());
 
-            ColumnWithDictionary::Index(maps.additional_keys_map->getPtr()).check(additional_keys->size());
+            ColumnLowCardinality::Index(maps.additional_keys_map->getPtr()).check(additional_keys->size());
 
-            ColumnWithDictionary::Index(indexes_column->getPtr()).check(
+            ColumnLowCardinality::Index(indexes_column->getPtr()).check(
                     maps.dictionary_map->size() + maps.additional_keys_map->size());
 
             auto used_keys = (*std::move(global_dictionary->getNestedColumn()->index(*maps.dictionary_map, 0))).mutate();
@@ -732,7 +732,7 @@ void DataTypeLowCardinality::serializeImpl(
         const IColumn & column, size_t row_num, WriteBuffer & ostr,
         DataTypeLowCardinality::SerealizeFunctionPtr<Args ...> func, Args & ... args) const
 {
-    auto & column_with_dictionary = getColumnWithDictionary(column);
+    auto & column_with_dictionary = getColumnLowCardinality(column);
     size_t unique_row_number = column_with_dictionary.getIndexes().getUInt(row_num);
     (dictionary_type.get()->*func)(*column_with_dictionary.getDictionary().getNestedColumn(), unique_row_number, ostr, std::forward<Args>(args)...);
 }
@@ -742,7 +742,7 @@ void DataTypeLowCardinality::deserializeImpl(
         IColumn & column, ReadBuffer & istr,
         DataTypeLowCardinality::DeserealizeFunctionPtr<Args ...> func, Args & ... args) const
 {
-    auto & column_with_dictionary = getColumnWithDictionary(column);
+    auto & column_with_dictionary = getColumnLowCardinality(column);
     auto temp_column = column_with_dictionary.getDictionary().getNestedColumn()->cloneEmpty();
 
     (dictionary_type.get()->*func)(*temp_column, istr, std::forward<Args>(args)...);
@@ -829,7 +829,7 @@ MutableColumnPtr DataTypeLowCardinality::createColumn() const
 {
     MutableColumnPtr indexes = DataTypeUInt8().createColumn();
     MutableColumnPtr dictionary = createColumnUnique(*dictionary_type);
-    return ColumnWithDictionary::create(std::move(dictionary), std::move(indexes));
+    return ColumnLowCardinality::create(std::move(dictionary), std::move(indexes));
 }
 
 bool DataTypeLowCardinality::equals(const IDataType & rhs) const
@@ -851,7 +851,7 @@ static DataTypePtr create(const ASTPtr & arguments)
     return std::make_shared<DataTypeLowCardinality>(DataTypeFactory::instance().get(arguments->children[0]));
 }
 
-void registerDataTypeWithDictionary(DataTypeFactory & factory)
+void registerDataTypeLowCardinality(DataTypeFactory & factory)
 {
     factory.registerDataType("LowCardinality", create);
 }

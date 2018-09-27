@@ -1,7 +1,7 @@
 #pragma once
 
 #include <DataStreams/IProfilingBlockInputStream.h>
-#include <Columns/ColumnWithDictionary.h>
+#include <Columns/ColumnLowCardinality.h>
 #include <DataTypes/DataTypeLowCardinality.h>
 #include <Columns/ColumnConst.h>
 
@@ -13,15 +13,15 @@ namespace DB
   * Unlike UnionBlockInputStream, it does this sequentially.
   * Blocks of different sources are not interleaved with each other.
   */
-class ConvertColumnWithDictionaryToFullBlockInputStream : public IProfilingBlockInputStream
+class ConvertColumnLowCardinalityToFullBlockInputStream : public IProfilingBlockInputStream
 {
 public:
-    explicit ConvertColumnWithDictionaryToFullBlockInputStream(const BlockInputStreamPtr & input)
+    explicit ConvertColumnColumnLowCardinalityToFullBlockInputStream(const BlockInputStreamPtr & input)
     {
         children.push_back(input);
     }
 
-    String getName() const override { return "ConvertColumnWithDictionaryToFull"; }
+    String getName() const override { return "ConvertColumnColumnLowCardinalityToFull"; }
 
     Block getHeader() const override { return convert(children.at(0)->getHeader()); }
 

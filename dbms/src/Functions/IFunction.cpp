@@ -13,7 +13,7 @@
 #include <Columns/ColumnArray.h>
 #include <Columns/ColumnConst.h>
 #include <Columns/ColumnTuple.h>
-#include <Columns/ColumnWithDictionary.h>
+#include <Columns/ColumnLowCardinality.h>
 #include <Functions/FunctionHelpers.h>
 #include <Functions/IFunction.h>
 #include <Interpreters/ExpressionActions.h>
@@ -148,7 +148,7 @@ static ColumnPtr recursiveRemoveLowCardinality(const ColumnPtr & column)
         return ColumnTuple::create(columns);
     }
 
-    if (const auto * column_low_cardinality = typeid_cast<const ColumnWithDictionary *>(column.get()))
+    if (const auto * column_low_cardinality = typeid_cast<const ColumnLowCardinality *>(column.get()))
         return column_low_cardinality->convertToFullColumn();
 
     return column;
@@ -353,14 +353,14 @@ void PreparedFunctionImpl::executeWithoutColumnsWithDictionary(Block & block, co
     executeImpl(block, args, result, input_rows_count);
 }
 
-static const ColumnWithDictionary * findLowCardinalityArgument(const Block & block, const ColumnNumbers & args)
+static const ColumnLowCardinality * findLowCardinalityArgument(const Block & block, const ColumnNumbers & args)
 {
-    const ColumnWithDictionary * result_column = nullptr;
+    const ColumnLowCardinality * result_column = nullptr;
 
     for (auto arg : args)
     {
         const ColumnWithTypeAndName & column = block.getByPosition(arg);
-        if (auto * low_cardinality_column = checkAndGetColumn<ColumnWithDictionary>(column.column.get()))
+        if (auto * low_cardinality_column = checkAndGetColumn<ColumnLowCardinality>(column.column.get()))
         {
             if (result_column)
                 throw Exception("Expected single dictionary argument for function.", ErrorCodes::LOGICAL_ERROR);
@@ -381,7 +381,7 @@ static ColumnPtr replaceColumnsWithDictionaryByNestedAndGetDictionaryIndexes(
     for (auto arg : args)
     {
         ColumnWithTypeAndName & column = block.getByPosition(arg);
-        if (auto * column_with_dict = checkAndGetColumn<ColumnWithDictionary>(column.column.get()))
+        if (auto * column_with_dict = checkAndGetColumn<ColumnLowCardinality>(column.column.get()))
         {
             if (indexes)
                 throw Exception("Expected single dictionary argument for function.", ErrorCodes::LOGICAL_ERROR);
@@ -396,7 +396,7 @@ static ColumnPtr replaceColumnsWithDictionaryByNestedAndGetDictionaryIndexes(
         ColumnWithTypeAndName & column = block.getByPosition(arg);
         if (auto * column_const = checkAndGetColumn<ColumnConst>(column.column.get()))
             column.column = column_const->removeLowCardinality()->cloneResized(num_rows);
-        else if (auto * column_with_dict = checkAndGetColumn<ColumnWithDictionary>(column.column.get()))
+        else if (auto * column_with_dict = checkAndGetColumn<ColumnLowCardinality>(column.column.get()))
         {
             auto * type_with_dict = checkAndGetDataType<DataTypeLowCardinality>(column.type.get());
 
@@ -457,7 +457,7 @@ void PreparedFunctionImpl::execute(Block & block, const ColumnNumbers & args, si
                 if (cached_values)
                 {
                     auto indexes = cached_values->index_mapping->index(low_cardinality_column->getIndexes(), 0);
-                    res.column = ColumnWithDictionary::create(cached_values->function_result, indexes, true);
+                    res.column = ColumnLowCardinality::create(cached_values->function_result, indexes, true);
                     return;
                 }
             }
@@ -490,11 +490,11 @@ void PreparedFunctionImpl::execute(Block & block, const ColumnNumbers & args, si
                     res_indexes = cache_values->index_mapping;
                 }
 
-                res.column = ColumnWithDictionary::create(res_dictionary, res_indexes->index(*indexes, 0), use_cache);
+                res.column = ColumnLowCardinality::create(res_dictionary, res_indexes->index(*indexes, 0), use_cache);
             }
             else
             {
-                res.column = ColumnWithDictionary::create(res_dictionary, res_indexes);
+                res.column = ColumnLowCardinality::create(res_dictionary, res_indexes);
             }
         }
         else

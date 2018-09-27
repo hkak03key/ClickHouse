@@ -38,7 +38,7 @@
 #include <Functions/FunctionHelpers.h>
 #include <Functions/DateTimeTransforms.h>
 #include <DataTypes/DataTypeLowCardinality.h>
-#include <Columns/ColumnWithDictionary.h>
+#include <Columns/ColumnLowCardinality.h>
 
 
 namespace DB
@@ -1795,7 +1795,7 @@ private:
 
                 if (from_with_dict)
                 {
-                    auto * col_with_dict = typeid_cast<const ColumnWithDictionary *>(prev_arg_col.get());
+                    auto * col_with_dict = typeid_cast<const ColumnLowCardinality *>(prev_arg_col.get());
                     arg.column = col_with_dict->getDictionary().getNestedColumn();
                     arg.type = from_with_dict->getDictionaryType();
 
@@ -1820,7 +1820,7 @@ private:
             if (to_with_dict)
             {
                 auto res_column = to_with_dict->createColumn();
-                auto * col_with_dict = typeid_cast<ColumnWithDictionary *>(res_column.get());
+                auto * col_with_dict = typeid_cast<ColumnLowCardinality *>(res_column.get());
 
                 if (from_with_dict && !src_converted_to_full_column)
                 {
